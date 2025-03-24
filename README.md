@@ -8,6 +8,10 @@
 ![image](https://github.com/user-attachments/assets/7bb18d23-6277-4396-a7ae-938614ac2438)
 ![image](https://github.com/user-attachments/assets/183def8f-ca97-4a37-abb2-ef52333b4195)
 
+### reference
+Du, Tao, et al. "Diffpd: Differentiable projective dynamics." ACM Transactions on Graphics (ToG) 41.2 (2021): 1-21.
+Li, Yifei, et al. "Diffcloth: Differentiable cloth simulation with dry frictional contact." ACM Transactions on Graphics (TOG) 42.1 (2022): 1-20.
+
 ## visualization output
 ### initial
 ![image](https://github.com/user-attachments/assets/b3e5f90b-1ad9-4251-bca9-a34caceae486)
