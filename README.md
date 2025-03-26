@@ -1,12 +1,15 @@
 # Differentiable projective dynamics simulation for cloth in taichi
-将布置于任意位置下落，采用projective dynamics模拟布料状态，计算最终布下落点与目标小球的距离，利用projective dynamics backwards公式反向传播计算损失函数，最终得到合适的风向使得布从原始位置下落能罩住目标小球。
+在高性能模拟环境taichi中，采用projective dynamics simulation模拟布料状态，计算最终布下落点与目标小球的距离；第二阶段深度学习反向传播算法利用projective dynamics backwards公式训练每一次布下落的风向，计算损失函数，最终得到合适的风向使得布从原始位置下落能罩住目标小球。
 
-## theoretical framework
-![image](https://github.com/user-attachments/assets/09657cef-6204-446a-8f65-5a6ea0be3965)
-![image](https://github.com/user-attachments/assets/5a98ce4c-0a66-47c2-88eb-4d983c149841)
+## Theoretical framework
+![image](https://github.com/user-attachments/assets/4b3de985-4a43-405f-a912-bab2499f5e78)
+![image](https://github.com/user-attachments/assets/cf5df41c-d0c2-4d4f-a1ab-58d2989d3a6e)
 
-![image](https://github.com/user-attachments/assets/7bb18d23-6277-4396-a7ae-938614ac2438)
-![image](https://github.com/user-attachments/assets/183def8f-ca97-4a37-abb2-ef52333b4195)
+![image](https://github.com/user-attachments/assets/3370e642-a0f5-484b-b283-37f7dcf269f9)
+![image](https://github.com/user-attachments/assets/60a0804c-b238-4f8f-b660-85e7ec8f12cd)
+
+## Implementation
+![image](https://github.com/user-attachments/assets/93d6be52-55ff-4dd2-a12e-4ea5651d29c7)
 
 ### reference
 Du, Tao, et al. "Diffpd: Differentiable projective dynamics." ACM Transactions on Graphics (ToG) 41.2 (2021): 1-21.
