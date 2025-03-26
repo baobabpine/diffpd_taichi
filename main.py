@@ -21,7 +21,7 @@ scalar = lambda: ti.field(dtype=real)
 vec = lambda: ti.Vector.field(3, dtype=real)
 timing = lambda: ti.field(dtype=ti.i32)
 
-loss = scalar()
+loss = scalar()  # backwards
 grad_a = scalar()
 grad_b = scalar()
 x_ = vec()
@@ -63,7 +63,7 @@ pre_length = ti.field(ti.f32, NE)
 KsStruct = ti.field(dtype=ti.f32, shape=())
 
 # dm = ti.ndarray(ti.f32, 3 * num_spring)
-dmr = ti.linalg.SparseMatrixBuilder(3 * num_spring, 1, max_num_triplets=1000000)
+dmr = ti.linalg.SparseMatrixBuilder(3 * num_spring, 1, max_num_triplets=1000000)  # sparsematrix
 ym = ti.ndarray(ti.f32, 3 * num_vertices)
 mhlr = ti.linalg.SparseMatrixBuilder(3 * num_vertices, 3 * num_vertices, max_num_triplets=1000000)
 jmr = ti.linalg.SparseMatrixBuilder(3 * num_vertices, 3 * num_spring, max_num_triplets=1000000)
@@ -72,7 +72,7 @@ res_right = ti.ndarray(ti.f32, 3*num_vertices)
 Lx = ti.ndarray(ti.f32, 3 * num_vertices)
 
 gravity = ti.Vector([0.0, -0.5, 0.0])
-ball_centers = ti.Vector.field(3, float, 1)
+ball_centers = ti.Vector.field(3, float, 1) #target
 ball_radius = ti.field(float, shape=(1))
 deltaT = ti.field(float, shape=(1))
 
@@ -117,7 +117,7 @@ def get_length2(v):
 
 
 @ti.kernel
-def reset_cloth():
+def reset_cloth():  # initial
     for i, j in pos:
         pos[i, j] = ti.Vector(
             [clothWid * (i / clothResX) - clothWid / 2.0 - 8.0, 10.0, clothHgt * (j / clothResX) - clothHgt / 2.0])
@@ -142,7 +142,7 @@ def reset_cloth():
 
 
 @ti.kernel
-def assemble_mhl(mhl: ti.types.sparse_matrix_builder()):
+def assemble_mhl(mhl: ti.types.sparse_matrix_builder()):  # m + h * h *k
     for i in range(0, NE):
         idx1 = edgelist[i][0]
         idx2 = edgelist[i][1]
@@ -157,7 +157,7 @@ def assemble_mhl(mhl: ti.types.sparse_matrix_builder()):
 
 
 @ti.kernel
-def assemble_dm(testd: ti.types.sparse_matrix_builder()):
+def assemble_dm(testd: ti.types.sparse_matrix_builder()):  # distance
     for i in range(0, NE):
         idx1 = edgelist[i][0]
         idx2 = edgelist[i][1]
@@ -174,7 +174,7 @@ def assemble_dm(testd: ti.types.sparse_matrix_builder()):
 
 
 @ti.kernel
-def assemble_d2(td: ti.types.sparse_matrix_builder(), x: ti.types.ndarray()):
+def assemble_d2(td: ti.types.sparse_matrix_builder(), x: ti.types.ndarray()):  # update distance
     for i in range(0, NE):
         idx1 = edgelist[i][0]
         idx2 = edgelist[i][1]
@@ -245,7 +245,7 @@ def update_pos(x: ti.types.ndarray()):
             F[y, z] = [0.0, 0.0, 0.0]
 
 
-def init_edges():
+def init_edges():  # initial
     for i in range(0, num_triangles):
         tem[0] = indices[3 * i]
         tem[1] = indices[3 * i + 1]
@@ -297,7 +297,7 @@ def calc_converge(xc: ti.types.ndarray(), x_prevc: ti.types.ndarray()) -> ti.f32
     return tmp
 
 
-def apply_pd():
+def apply_pd():  # projective dynamics simulation
     assemble_dm(dmr)
     dmb = dmr.build()
     assemble_ym(ym)
@@ -306,7 +306,7 @@ def apply_pd():
     tmp = 100000000
     count = 0
     prev_x = ti.ndarray(ti.f32, 3 * num_vertices)
-    while tmp > 0.001 and count < 10:
+    while tmp > 0.001 and count < 10:  # thresholds
         right = jmb @ dmb
         for i in range(num_vertices):
             for j in range(3):
@@ -327,7 +327,7 @@ def apply_pd():
 
 
 @ti.kernel
-def time_integrate(t: ti.i32):
+def time_integrate(t: ti.i32):  # update
     for i in range(num_vertices):
         x_[t, i] = pos[int(i/clothResX), i % clothResX]
         v_[t, i] = vel[int(i/clothResX), i % clothResX]
@@ -371,7 +371,7 @@ def visualize(output, t):
         gui.save_image('mass_spring_simple/{}/{:04d}.png'.format(output, t))
 
 
-def forward(output=None):
+def forward(output=None):  # simulation
     interval = vis_interval
     mid = int(clothResX / 2)
     count = 0
@@ -440,7 +440,7 @@ def init_xv0():
 
 
 @ti.func
-def compute_f(coord):
+def compute_f(coord):  # gravity and wind force
     F[coord] = gravity * mass + vel[coord] * damping + a[None]*ti.Vector([1.0, 0.0, 0.0]) + b[None]*ti.Vector([0.0, 0.0, 1.0])
     offcet = pos[coord] - ball_centers[0]
     dist = ti.sqrt(offcet.x * offcet.x + offcet.y * offcet.y + offcet.z * offcet.z)
@@ -466,7 +466,7 @@ def init_f():
 
 
 @ti.kernel
-def dproj_dx(dproj_dnew: ti.types.sparse_matrix_builder()):
+def dproj_dx(dproj_dnew: ti.types.sparse_matrix_builder()):  # projective dynamics backwards differential
     for i in range(0, NE):
         idx1 = edgelist[i][0]
         idx2 = edgelist[i][1]
@@ -502,7 +502,7 @@ def dl_dx(dlx: ti.types.ndarray()):
 
 
 @ti.kernel
-def calc_g_ab(zn: ti.types.ndarray()):
+def calc_g_ab(zn: ti.types.ndarray()):  # update wind force gradients
     tma = 0.0
     tmb = 0.0
     for i in range(num_vertices):
@@ -517,7 +517,7 @@ def calc_g_ab(zn: ti.types.ndarray()):
 
 
 @ti.kernel
-def adapt_cloth():
+def adapt_cloth():  # update
     for i, j in pos:
         pos[i, j] = ti.Vector(
             [clothWid * (i / clothResX) - clothWid / 2.0, 3.0, clothHgt * (j / clothResX) - clothHgt / 2.0])
@@ -525,12 +525,12 @@ def adapt_cloth():
 
 
 @ti.kernel
-def store_simulate():
+def store_simulate():  # last state
     for i in range(num_vertices):
         x_simulate[0, i] = pos[int(i/clothResX), i % clothResX]
 
 
-def simulate():  # before forward()
+def simulate():  # before forward() sample
     adapt_cloth()
     mid = int(clothResX / 2)
     count = 0
